@@ -1,3 +1,5 @@
+BUMP := 'patch'
+
 help:
 	@grep '^[^#[:space:]].*:' Makefile | awk -F ":" '{print $$1}'
 
@@ -9,6 +11,28 @@ deps:
 
 setup: deps
 
-test: clean deps
-	@nosetests -s -v --with-coverage --cover-package=pluct
-	@flake8 .
+patch:
+	@$(eval BUMP := 'patch')
+
+minor:
+	@$(eval BUMP := 'minor')
+
+major:
+	@$(eval BUMP := 'major')
+
+bump:
+	@bumpversion ${BUMP}
+
+release:
+	@echo 'PyPI server: '; read PYPI_SERVER; \
+		python setup.py -q sdist upload -r $$PYPI_SERVER
+	@git push
+	@git push --tags
+
+coverage_html:
+	@coverage html --include='pluct/**'
+	@echo 'Check "htmlcov/index.html" for coverage report.'
+
+test: clean
+	@nosetests -s -v --with-coverage --cover-package=pluct --cover-branches --cover-erase
+	@flake8 pluct/
